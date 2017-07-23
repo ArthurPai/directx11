@@ -25,7 +25,7 @@ bool GraveD3D::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
     IDXGIAdapter* adapter;
     IDXGIOutput* adapterOutput;
     unsigned int numModes, i, numerator, denominator;
-    unsigned int stringLength;
+    size_t stringLength;
     DXGI_MODE_DESC* displayModeList;
     DXGI_ADAPTER_DESC adapterDesc;
     int error;

@@ -1,5 +1,8 @@
 #pragma once
 #include "GraveD3D.h"
+#include "Camera.h"
+#include "Model.h"
+#include "ColorShader.h"
 
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
@@ -21,5 +24,8 @@ private:
 
 private:
     GraveD3D* m_Direct3D;
+    Camera* m_Camera;
+    Model* m_Model;
+    ColorShader* m_ColorShader;
 };
 

@@ -142,17 +142,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ColorShader.cpp" />
     <ClCompile Include="GraveD3D.cpp" />
     <ClCompile Include="GraveGraphics.cpp" />
     <ClCompile Include="GraveInput.cpp" />
     <ClCompile Include="GraveSystem.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Model.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="ColorShader.h" />
     <ClInclude Include="GraveD3D.h" />
     <ClInclude Include="GraveGraphics.h" />
     <ClInclude Include="GraveInput.h" />
     <ClInclude Include="GraveSystem.h" />
+    <ClInclude Include="Model.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\shaders\color.ps" />
+    <None Include="Data\shaders\color.vs">
+      <FileType>Text</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
