@@ -142,12 +142,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GraveD3D.cpp" />
     <ClCompile Include="GraveGraphics.cpp" />
     <ClCompile Include="GraveInput.cpp" />
     <ClCompile Include="GraveSystem.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GraveD3D.h" />
     <ClInclude Include="GraveGraphics.h" />
     <ClInclude Include="GraveInput.h" />
     <ClInclude Include="GraveSystem.h" />

@@ -1,5 +1,5 @@
 #pragma once
-#include <Windows.h>
+#include "GraveD3D.h"
 
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
@@ -18,5 +18,8 @@ public:
 
 private:
     bool Render();
+
+private:
+    GraveD3D* m_Direct3D;
 };
 
