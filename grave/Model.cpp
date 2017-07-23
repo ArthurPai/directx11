@@ -53,10 +53,10 @@ bool Model::InitializeBuffers(ID3D11Device* device)
     HRESULT result;
 
     // 設定頂點數量
-    m_vertexCount = 3;
+    m_vertexCount = 4;
 
     // 設定 indices 數量
-    m_indexCount = 3;
+    m_indexCount = 6;
 
     // 建立 vertex array
     vertices = new VertexType[m_vertexCount];
@@ -72,18 +72,24 @@ bool Model::InitializeBuffers(ID3D11Device* device)
 
     // 設定頂點
     vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // 左下
-    vertices[0].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[0].color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
-    vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);  // 上方
-    vertices[1].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[1].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // 右下
+    vertices[1].color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
-    vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // 右下
-    vertices[2].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[2].position = XMFLOAT3(1.0f, 1.0f, 0.0f);  // 右上
+    vertices[2].color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+
+    vertices[3].position = XMFLOAT3(-1.0f, 1.0f, 0.0f);  // 左上
+    vertices[3].color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
 
     // 設定 indices，按照順時鐘
     indices[0] = 0;  // 左下
-    indices[1] = 1;  // 上方
-    indices[2] = 2;  // 右下
+    indices[1] = 2;  // 右下
+    indices[2] = 1;  // 右上
+    indices[3] = 0;  // 左下
+    indices[4] = 3;  // 右上
+    indices[5] = 2;  // 左上
 
     // 設定 static vertex buffer description
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;

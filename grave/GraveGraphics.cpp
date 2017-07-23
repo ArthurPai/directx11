@@ -36,7 +36,7 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // 設定攝影機位置
-    m_Camera->SetPosition(0.0f, 0.0f, -5.0f);
+    m_Camera->SetPosition(0.0f, 0.0f, -15.0f);
 
     // 建立模型物件
     m_Model = new Model;
