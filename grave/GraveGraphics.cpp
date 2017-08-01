@@ -5,7 +5,7 @@ GraveGraphics::GraveGraphics()
     m_Direct3D = NULL;
     m_Camera = NULL;
     m_Model = NULL;
-    m_ColorShader = NULL;
+    m_TextureShader = NULL;
 }
 
 GraveGraphics::~GraveGraphics()
@@ -45,22 +45,22 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // 初始化模型
-    result = m_Model->Initialize(m_Direct3D->GetDevice());
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), "./Data/stone01.tga");
     if (!result) {
         MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
         return false;
     }
 
-    // 建立 color shader 物件
-    m_ColorShader = new ColorShader;
-    if (!m_ColorShader) {
+    // 建立 shader 物件
+    m_TextureShader = new GraveTextureShader;
+    if (!m_TextureShader) {
         return false;
     }
 
-    // 初始化 color shader 物件
-    result = m_ColorShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+    // 初始化 shader 物件
+    result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
     if (!result) {
-        MessageBox(hwnd, L"Could not initialize the color shader object.", L"Error", MB_OK);
+        MessageBox(hwnd, L"Could not initialize the shader object.", L"Error", MB_OK);
         return false;
     }
 
@@ -69,10 +69,11 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void GraveGraphics::Shutdown()
 {
-    if (m_ColorShader) {
-        m_ColorShader->Shutdown();
-        delete m_ColorShader;
-        m_ColorShader = 0;
+    // Release the texture shader object.
+    if (m_TextureShader) {
+        m_TextureShader->Shutdown();
+        delete m_TextureShader;
+        m_TextureShader = 0;
     }
 
     if (m_Model) {
@@ -126,12 +127,12 @@ bool GraveGraphics::Render()
     // 繪製模型：將模型的 vertex 及 index buffers 放入 render pipeline
     m_Model->Render(m_Direct3D->GetDeviceContext());
 
-    // 使用 color shader 繪製模型
-    result = m_ColorShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix);
-    if (!result) {
+    // 使用 shader 繪製模型
+    result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
+    if (!result)
+    {
         return false;
     }
-
     // 顯示結果到螢幕上
     m_Direct3D->EndScene();
 

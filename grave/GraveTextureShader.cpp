@@ -1,45 +1,46 @@
-#include "ColorShader.h"
+#include "GraveTextureShader.h"
 
-ColorShader::ColorShader()
+GraveTextureShader::GraveTextureShader()
 {
     m_vertexShader = 0;
     m_pixelShader = 0;
     m_layout = 0;
     m_matrixBuffer = 0;
+    m_sampleState = 0;
 }
 
-ColorShader::~ColorShader()
+
+GraveTextureShader::~GraveTextureShader()
 {
 }
 
-bool ColorShader::Initialize(ID3D11Device* device, HWND hwnd)
+bool GraveTextureShader::Initialize(ID3D11Device* device, HWND hwnd)
 {
     bool result;
 
     // 初始化 vertex 及 pixel shaders
-    result = InitializeShader(device, hwnd, L"./Data/shaders/color.vs", L"./Data/shaders/color.ps");
-    if (!result) {
+    result = InitializeShader(device, hwnd, L"./Data/shaders/texture.vs", L"./Data/shaders/texture.ps");
+    if (!result)
+    {
         return false;
     }
 
     return true;
 }
 
-void ColorShader::Shutdown()
+void GraveTextureShader::Shutdown()
 {
     // 釋放 vertex, pixel shaders 及相關物件
     ShutdownShader();
-
-    return;
 }
 
-bool ColorShader::Render(ID3D11DeviceContext* deviceContext, int indexCount,
-    const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix)
+bool GraveTextureShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, 
+    const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture)
 {
     bool result;
 
     // 設定 shader 參數
-    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix);
+    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture);
     if (!result)
     {
         return false;
@@ -51,49 +52,59 @@ bool ColorShader::Render(ID3D11DeviceContext* deviceContext, int indexCount,
     return true;
 }
 
-bool ColorShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
+bool GraveTextureShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
 {
     HRESULT result;
-    ID3D10Blob* errorMessage = NULL;
-    ID3D10Blob* vertexShaderBuffer = NULL;
-    ID3D10Blob* pixelShaderBuffer = NULL;
+    ID3D10Blob* errorMessage;
+    ID3D10Blob* vertexShaderBuffer;
+    ID3D10Blob* pixelShaderBuffer;
     D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
     unsigned int numElements;
     D3D11_BUFFER_DESC matrixBufferDesc;
+    D3D11_SAMPLER_DESC samplerDesc;
+
+    errorMessage = 0;
+    vertexShaderBuffer = 0;
+    pixelShaderBuffer = 0;
 
     // 編譯 vertex shader 程式碼
-    result = D3DCompileFromFile(vsFilename, NULL, NULL, "ColorVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
+    result = D3DCompileFromFile(vsFilename, NULL, NULL, "TextureVertexShader", "vs_4_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
         &vertexShaderBuffer, &errorMessage);
-    if (FAILED(result)) {
+    if (FAILED(result))
+    {
         // 抓取錯誤訊息
-        if (errorMessage) {
+        if (errorMessage)
+        {
             OutputShaderErrorMessage(errorMessage, hwnd, vsFilename);
         }
         // 如果沒有錯誤訊息，就顯示找不到 shader 檔案
-        else {
-            MessageBox(hwnd, vsFilename, L"Missing Vertex Shader File", MB_OK);
+        else
+        {
+            MessageBox(hwnd, vsFilename, L"Missing Shader File", MB_OK);
         }
 
         return false;
     }
 
     // 編譯 pixel shader 程式碼
-    result = D3DCompileFromFile(psFilename, NULL, NULL, "ColorPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
+    result = D3DCompileFromFile(psFilename, NULL, NULL, "TexturePixelShader", "ps_4_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
         &pixelShaderBuffer, &errorMessage);
-    if (FAILED(result)) {
+    if (FAILED(result))
+    {
         // 抓取錯誤訊息
-        if (errorMessage) {
+        if (errorMessage)
+        {
             OutputShaderErrorMessage(errorMessage, hwnd, psFilename);
         }
         // 如果沒有錯誤訊息，就顯示找不到 shader 檔案
-        else {
-            MessageBox(hwnd, psFilename, L"Missing Pixel Shader File", MB_OK);
+        else
+        {
+            MessageBox(hwnd, psFilename, L"Missing Shader File", MB_OK);
         }
 
         return false;
     }
 
-    SIZE_T size = vertexShaderBuffer->GetBufferSize();
     // 從 buffer 中建立 vertex shader
     result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &m_vertexShader);
     if (FAILED(result))
@@ -118,21 +129,22 @@ bool ColorShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFil
     polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     polygonLayout[0].InstanceDataStepRate = 0;
 
-    polygonLayout[1].SemanticName = "COLOR";
+    polygonLayout[1].SemanticName = "TEXCOORD";
     polygonLayout[1].SemanticIndex = 0;
-    polygonLayout[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
     polygonLayout[1].InputSlot = 0;
     polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
     polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     polygonLayout[1].InstanceDataStepRate = 0;
 
-    // 計算 polygonLayout 裡的元素數量
+    // 計算 Layout 裡的元素數量
     numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
     // 建立 vertex input layout.
     result = device->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(),
         vertexShaderBuffer->GetBufferSize(), &m_layout);
-    if (FAILED(result)) {
+    if (FAILED(result))
+    {
         return false;
     }
 
@@ -153,37 +165,70 @@ bool ColorShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFil
 
     // 建立 constant buffer pointer，這樣才可以從程式端取得 vertex shader 中的 constant buffer
     result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
-    if (FAILED(result)) {
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // 設定貼圖取樣的描述 (texture sampler state description)
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.MipLODBias = 0.0f;
+    samplerDesc.MaxAnisotropy = 1;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    samplerDesc.BorderColor[0] = 0;
+    samplerDesc.BorderColor[1] = 0;
+    samplerDesc.BorderColor[2] = 0;
+    samplerDesc.BorderColor[3] = 0;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    // 建立貼圖取樣方式(texture sampler state)
+    result = device->CreateSamplerState(&samplerDesc, &m_sampleState);
+    if (FAILED(result))
+    {
         return false;
     }
 
     return true;
 }
 
-void ColorShader::ShutdownShader()
+void GraveTextureShader::ShutdownShader()
 {
-    if (m_matrixBuffer) {
+    if (m_sampleState)
+    {
+        m_sampleState->Release();
+        m_sampleState = 0;
+    }
+
+    if (m_matrixBuffer)
+    {
         m_matrixBuffer->Release();
         m_matrixBuffer = 0;
     }
 
-    if (m_layout) {
+    if (m_layout)
+    {
         m_layout->Release();
         m_layout = 0;
     }
 
-    if (m_pixelShader) {
+    if (m_pixelShader)
+    {
         m_pixelShader->Release();
         m_pixelShader = 0;
     }
 
-    if (m_vertexShader) {
+    if (m_vertexShader)
+    {
         m_vertexShader->Release();
         m_vertexShader = 0;
     }
 }
 
-void ColorShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
+void GraveTextureShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
 {
     char* compileErrors;
     unsigned long long bufferSize, i;
@@ -213,16 +258,15 @@ void ColorShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, 
 
     // 顯示錯誤
     MessageBox(hwnd, L"Error compiling shader.  Check shader-error.txt for message.", shaderFilename, MB_OK);
-
-    return;
 }
 
-bool ColorShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
-    const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix)
+bool GraveTextureShader::SetShaderParameters(ID3D11DeviceContext* deviceContext, 
+    const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     MatrixBufferType* dataPtr;
+    unsigned int bufferNumber;
 
     // convert matrix from row-major to column-major
     XMMATRIX _worldMatrix = XMMatrixTranspose(worldMatrix);
@@ -231,7 +275,8 @@ bool ColorShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 
     // 鎖住 constant buffer，準備更新資料
     result = deviceContext->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-    if (FAILED(result)) {
+    if (FAILED(result))
+    {
         return false;
     }
 
@@ -249,19 +294,24 @@ bool ColorShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     // 更新 vertex shader
     deviceContext->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
 
+    // 設定 shader 的貼圖來源
+    deviceContext->PSSetShaderResources(0, 1, &texture);
+
     return true;
 }
 
-void ColorShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void GraveTextureShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
 {
     // 設定 vertex input layout
     deviceContext->IASetInputLayout(m_layout);
 
-    // 設定要使用的 vertex 及 pixel shaders
+    // 設定要使用的 vertex, pixel shaders 及 取樣方式
     deviceContext->VSSetShader(m_vertexShader, NULL, 0);
     deviceContext->PSSetShader(m_pixelShader, NULL, 0);
+    deviceContext->PSSetSamplers(0, 1, &m_sampleState);
 
     // 繪製模型
     deviceContext->DrawIndexed(indexCount, 0, 0);
-}
 
+    return;
+}

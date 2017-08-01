@@ -4,13 +4,14 @@ Model::Model()
 {
     m_vertexBuffer = 0;
     m_indexBuffer = 0;
+    m_Texture = 0;
 };
 
 Model::~Model()
 {
 }
 
-bool Model::Initialize(ID3D11Device* device)
+bool Model::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* textureFilename)
 {
     bool result;
 
@@ -20,11 +21,21 @@ bool Model::Initialize(ID3D11Device* device)
         return false;
     }
 
+    // Load the texture for this model.
+    result = LoadTexture(device, deviceContext, textureFilename);
+    if (!result)
+    {
+        return false;
+    }
+
     return true;
 }
 
 void Model::Shutdown()
 {
+    // 釋放貼圖資源
+    ReleaseTexture();
+
     // 釋放 vertex 及 index buffer
     ShutdownBuffers();
 
@@ -42,6 +53,11 @@ void Model::Render(ID3D11DeviceContext* deviceContext)
 int Model::GetIndexCount()
 {
     return m_indexCount;
+}
+
+ID3D11ShaderResourceView* Model::GetTexture()
+{
+    return m_Texture->GetTexture();
 }
 
 bool Model::InitializeBuffers(ID3D11Device* device)
@@ -72,13 +88,13 @@ bool Model::InitializeBuffers(ID3D11Device* device)
 
     // 設定頂點
     vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // 左下
-    vertices[0].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
 
     vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);  // 上方
-    vertices[1].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
 
     vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // 右下
-    vertices[2].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
 
     // 設定 indices，按照順時鐘
     indices[0] = 0;  // 左下
@@ -167,6 +183,40 @@ void Model::RenderBuffers(ID3D11DeviceContext* deviceContext)
 
     // 設定 primitive type
     deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    return;
+}
+
+bool Model::LoadTexture(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* filename)
+{
+    bool result;
+
+    // Create the texture object.
+    m_Texture = new GraveTexture;
+    if (!m_Texture)
+    {
+        return false;
+    }
+
+    // Initialize the texture object.
+    result = m_Texture->Initialize(device, deviceContext, filename);
+    if (!result)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void Model::ReleaseTexture()
+{
+    // Release the texture object.
+    if (m_Texture)
+    {
+        m_Texture->Shutdown();
+        delete m_Texture;
+        m_Texture = 0;
+    }
 
     return;
 }
