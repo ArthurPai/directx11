@@ -86,15 +86,18 @@ bool Model::InitializeBuffers(ID3D11Device* device)
         return false;
     }
 
-    // 設定頂點
+    // 設定頂點，新增頂點的法向量
     vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // 左下
     vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
+    vertices[0].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 
     vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);  // 上方
     vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
+    vertices[1].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 
     vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // 右下
     vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
+    vertices[2].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
 
     // 設定 indices，按照順時鐘
     indices[0] = 0;  // 左下

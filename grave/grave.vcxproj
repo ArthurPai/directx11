@@ -150,6 +150,8 @@
     <ClCompile Include="GraveD3D.cpp" />
     <ClCompile Include="GraveGraphics.cpp" />
     <ClCompile Include="GraveInput.cpp" />
+    <ClCompile Include="GraveLight.cpp" />
+    <ClCompile Include="GraveLightShader.cpp" />
     <ClCompile Include="GraveSystem.cpp" />
     <ClCompile Include="GraveTexture.cpp" />
     <ClCompile Include="GraveTextureShader.cpp" />
@@ -162,6 +164,8 @@
     <ClInclude Include="GraveD3D.h" />
     <ClInclude Include="GraveGraphics.h" />
     <ClInclude Include="GraveInput.h" />
+    <ClInclude Include="GraveLight.h" />
+    <ClInclude Include="GraveLightShader.h" />
     <ClInclude Include="GraveSystem.h" />
     <ClInclude Include="GraveTexture.h" />
     <ClInclude Include="GraveTextureShader.h" />

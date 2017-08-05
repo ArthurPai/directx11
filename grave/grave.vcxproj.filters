@@ -51,6 +51,12 @@
     <ClCompile Include="GraveTextureShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GraveLightShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraveLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GraveSystem.h">
@@ -78,6 +84,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GraveTextureShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraveLightShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraveLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
