@@ -5,15 +5,23 @@ Model::Model()
     m_vertexBuffer = 0;
     m_indexBuffer = 0;
     m_Texture = 0;
+    m_model = 0;
 };
 
 Model::~Model()
 {
 }
 
-bool Model::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* textureFilename)
+bool Model::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceContext, char* modelFilename, char* textureFilename)
 {
     bool result;
+
+    // 載入模型
+    result = LoadModel(modelFilename);
+    if (!result)
+    {
+        return false;
+    }
 
     // 初始化 vertex 及 index buffer
     result = InitializeBuffers(device);
@@ -38,6 +46,9 @@ void Model::Shutdown()
 
     // 釋放 vertex 及 index buffer
     ShutdownBuffers();
+
+    // 釋放模型資料
+    ReleaseModel();
 
     return;
 }
@@ -67,12 +78,7 @@ bool Model::InitializeBuffers(ID3D11Device* device)
     D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
     D3D11_SUBRESOURCE_DATA vertexData, indexData;
     HRESULT result;
-
-    // 設定頂點數量
-    m_vertexCount = 3;
-
-    // 設定 indices 數量
-    m_indexCount = 3;
+    int i;
 
     // 建立 vertex array
     vertices = new VertexType[m_vertexCount];
@@ -86,23 +92,15 @@ bool Model::InitializeBuffers(ID3D11Device* device)
         return false;
     }
 
-    // 設定頂點，新增頂點的法向量
-    vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // 左下
-    vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
-    vertices[0].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
+    // 從模型資料載入 vertex 陣列及 index 陣列
+    for (i = 0; i<m_vertexCount; i++)
+    {
+        vertices[i].position = XMFLOAT3(m_model[i].x, m_model[i].y, m_model[i].z);
+        vertices[i].texture = XMFLOAT2(m_model[i].tu, m_model[i].tv);
+        vertices[i].normal = XMFLOAT3(m_model[i].nx, m_model[i].ny, m_model[i].nz);
 
-    vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);  // 上方
-    vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
-    vertices[1].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-
-    vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // 右下
-    vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
-    vertices[2].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-
-    // 設定 indices，按照順時鐘
-    indices[0] = 0;  // 左下
-    indices[1] = 1;  // 上方
-    indices[2] = 2;  // 右下
+        indices[i] = i;
+    }
 
     // 設定 static vertex buffer description
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -219,6 +217,74 @@ void Model::ReleaseTexture()
         m_Texture->Shutdown();
         delete m_Texture;
         m_Texture = 0;
+    }
+
+    return;
+}
+
+bool Model::LoadModel(char* filename)
+{
+    ifstream fin;
+    char input;
+    int i;
+
+    // 開啟模型檔案
+    fin.open(filename);
+
+    if (fin.fail())
+    {
+        return false;
+    }
+
+    // 讀取字元直到:出現
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+
+    // 讀取頂點數量
+    fin >> m_vertexCount;
+
+    // 設定 index 數量
+    m_indexCount = m_vertexCount;
+
+    // 建立 model vertics 資料
+    m_model = new VextexData[m_vertexCount];
+    if (!m_model)
+    {
+        return false;
+    }
+
+    // 找到vertex資料的起點
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+    fin.get(input);
+    fin.get(input);
+
+    // 讀取 vertex 資料
+    for (i = 0; i<m_vertexCount; i++)
+    {
+        fin >> m_model[i].x >> m_model[i].y >> m_model[i].z;
+        fin >> m_model[i].tu >> m_model[i].tv;
+        fin >> m_model[i].nx >> m_model[i].ny >> m_model[i].nz;
+    }
+
+    // 關檔
+    fin.close();
+
+    return true;
+}
+
+void Model::ReleaseModel()
+{
+    if (m_model)
+    {
+        delete[] m_model;
+        m_model = 0;
     }
 
     return;

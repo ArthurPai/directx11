@@ -46,7 +46,7 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // 初始化模型
-    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), "./Data/stone01.tga");
+    result = m_Model->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), "./Data/cube.txt", "./Data/stone01.tga");
     if (!result) {
         MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
         return false;
@@ -73,7 +73,7 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // 初始化 Light 物件，紫色燈光及方向朝向Z軸
-    m_Light->SetDiffuseColor(1.0f, 0.0f, 1.0f, 1.0f);
+    m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
     m_Light->SetDirection(0.0f, 0.0f, 1.0f);
 
     return true;
