@@ -7,6 +7,7 @@ GraveLightShader::GraveLightShader()
     m_layout = 0;
     m_sampleState = 0;
     m_matrixBuffer = 0;
+    m_cameraBuffer = 0;
     m_lightBuffer = 0;
 }
 
@@ -40,12 +41,15 @@ void GraveLightShader::Shutdown()
 
 bool GraveLightShader::Render(ID3D11DeviceContext* deviceContext, int indexCount,
     const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,
-    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor)
+    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor,
+    XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower)
 {
     bool result;
 
     // Set the shader parameters that it will use for rendering.
-    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, lightDirection, lightAmbientColor, lightDiffuseColor);
+    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix,
+        texture, lightDirection, lightAmbientColor, lightDiffuseColor,
+        cameraPosition, specularColor, specularPower);
     if (!result)
     {
         return false;
@@ -64,13 +68,12 @@ bool GraveLightShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
     ID3D10Blob* vertexShaderBuffer;
     ID3D10Blob* pixelShaderBuffer;
 
-    // 新增法向量 (normal) 資訊 
+    // 法向量 (normal) 資訊 
     D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
     unsigned int numElements;
     D3D11_SAMPLER_DESC samplerDesc;
     D3D11_BUFFER_DESC matrixBufferDesc;
-
-    // 新增 Light Buffer 描述
+    D3D11_BUFFER_DESC cameraBufferDesc;
     D3D11_BUFFER_DESC lightBufferDesc;
 
     // Initialize the pointers this function will use to null.
@@ -213,6 +216,21 @@ bool GraveLightShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
         return false;
     }
 
+    // 設定 camera dynamic matrix constant buffer description
+    cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
+    cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    cameraBufferDesc.MiscFlags = 0;
+    cameraBufferDesc.StructureByteStride = 0;
+
+    // 建立 constant buffer pointer，這樣才可以從程式端存取 vertex shader 中的 constant buffer
+    result = device->CreateBuffer(&cameraBufferDesc, NULL, &m_cameraBuffer);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     // 設定 light dynamic matrix constant buffer description
     // 注意: 如果是使用D3D11_BIND_CONSTANT_BUFFER，ByteWidth必須是16的倍數
     lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -234,6 +252,12 @@ bool GraveLightShader::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* 
 
 void GraveLightShader::ShutdownShader()
 {
+    if (m_cameraBuffer)
+    {
+        m_cameraBuffer->Release();
+        m_cameraBuffer = 0;
+    }
+
     if (m_lightBuffer)
     {
         m_lightBuffer->Release();
@@ -308,13 +332,15 @@ void GraveLightShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND h
 
 bool GraveLightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,
-    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor)
+    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor,
+    XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     unsigned int bufferNumber;
     MatrixBufferType* dataPtr;
     LightBufferType* dataPtr2;
+    CameraBufferType* dataPtr3;
 
     // convert matrix from row-major to column-major
     XMMATRIX _worldMatrix = XMMatrixTranspose(worldMatrix);
@@ -342,6 +368,26 @@ bool GraveLightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     // 更新 vertex shader
     deviceContext->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
 
+    // 鎖住 camera constant buffer，準備更新資料
+    result = deviceContext->Map(m_cameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // 取得 constant buffer 資料的指標
+    dataPtr3 = (CameraBufferType*)mappedResource.pData;
+
+    // 拷貝 camera position 到 constant buffer
+    dataPtr3->cameraPosition = cameraPosition;
+    dataPtr3->padding = 0.0f;
+
+    // 鎖住 camera constant buffer，準備更新資料
+    deviceContext->Unmap(m_cameraBuffer, 0);
+
+    // 更新 vertex shader 的第二個 constant buffer
+    deviceContext->VSSetConstantBuffers(1, 1, &m_cameraBuffer);
+
     // 設定 shader 的貼圖來源
     deviceContext->PSSetShaderResources(0, 1, &texture);
 
@@ -359,7 +405,8 @@ bool GraveLightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     dataPtr2->ambientColor = ambientColor;
     dataPtr2->diffuseColor = diffuseColor;
     dataPtr2->lightDirection = lightDirection;
-    dataPtr2->padding = 0.0f;
+    dataPtr2->specularColor = specularColor;
+    dataPtr2->specularPower = specularPower;
 
     // 解開 constant buffer
     deviceContext->Unmap(m_lightBuffer, 0);

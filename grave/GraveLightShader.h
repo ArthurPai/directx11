@@ -16,14 +16,21 @@ private:
         XMMATRIX world;
         XMMATRIX view;
         XMMATRIX projection;
-    }; 
+    };
+
+    struct CameraBufferType
+    {
+        XMFLOAT3 cameraPosition;
+        float padding;
+    };
 
     struct LightBufferType
     {
         XMFLOAT4 ambientColor;
         XMFLOAT4 diffuseColor;
         XMFLOAT3 lightDirection;
-        float padding;  // Added extra padding so structure is a multiple of 16 for CreateBuffer function requirements.
+        float specularPower;
+        XMFLOAT4 specularColor;
     };
 
 public:
@@ -34,7 +41,8 @@ public:
     void Shutdown();
     bool Render(ID3D11DeviceContext* deviceContext, int indexCount,
         const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,
-        ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor);
+        ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor,
+        XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower);
 
 private:
     bool InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename);
@@ -43,7 +51,8 @@ private:
 
     bool SetShaderParameters(ID3D11DeviceContext* deviceContext,
         const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,
-        ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor);
+        ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor,
+        XMFLOAT3 cameraPosition, XMFLOAT4 specularColor, float specularPower);
     void RenderShader(ID3D11DeviceContext* deviceContext, int indexCount);
 
 private:
@@ -53,6 +62,7 @@ private:
     ID3D11SamplerState* m_sampleState;
     ID3D11Buffer* m_matrixBuffer;
 
+    ID3D11Buffer* m_cameraBuffer;
     ID3D11Buffer* m_lightBuffer;
 };
 
