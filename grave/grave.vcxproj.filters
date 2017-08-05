@@ -106,5 +106,7 @@
     <None Include="Data\shaders\color.ps">
       <Filter>Data\shaders</Filter>
     </None>
+    <None Include="packages.config" />
+    <None Include="courier_new.spritefont" />
   </ItemGroup>
 </Project>

@@ -175,10 +175,12 @@
     <ClInclude Include="Model.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="courier_new.spritefont" />
     <None Include="Data\shaders\color.ps" />
     <None Include="Data\shaders\color.vs">
       <FileType>Text</FileType>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

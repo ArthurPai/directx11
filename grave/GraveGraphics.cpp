@@ -19,6 +19,10 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
     bool result;
 
+    // Store the screen size.
+    m_screenWidth = screenWidth;
+    m_screenHeight = screenHeight;
+
     // 建立 Direct3D 物件
     m_Direct3D = new GraveD3D;
     if (!m_Direct3D) {
@@ -109,6 +113,12 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
         return false;
     }
+
+    // 載入字型
+    m_font = std::make_unique<SpriteFont>(m_Direct3D->GetDevice(), L"courier_new.spritefont");
+    m_spriteBatch = std::make_unique<SpriteBatch>(m_Direct3D->GetDeviceContext());
+    m_fontPos.x = m_screenWidth / 2.f;
+    m_fontPos.y = m_screenHeight / 2.f;
 
     return true;
 }
@@ -242,6 +252,25 @@ bool GraveGraphics::Render(float rotation, float move)
 
     // 開啟 Z buffer
     m_Direct3D->TurnZBufferOn();
+
+    // 開始輸出文字
+    m_spriteBatch->Begin();
+
+    const wchar_t* output = L"Hello World";
+
+    // 文字的座標，中心點
+    //m_fontPos.x = m_screenWidth / 2.f;
+    //m_fontPos.y = m_screenHeight / 2.f;
+    //XMVECTOR origin = m_font->MeasureString(output) / 2.f;
+
+    m_fontPos.x = 0.0f;
+    m_fontPos.y = m_screenHeight;
+    XMVECTOR center = m_font->MeasureString(output);
+    XMFLOAT2 origin = XMFLOAT2(0, center.m128_f32[1]);
+
+    m_font->DrawString(m_spriteBatch.get(), output, m_fontPos, Colors::White, 0.f, origin);
+
+    m_spriteBatch->End();
 
     // 顯示結果到螢幕上
     m_Direct3D->EndScene();

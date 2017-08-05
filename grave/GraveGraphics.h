@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "GraveD3D.h"
 #include "Camera.h"
 #include "Model.h"
@@ -6,11 +7,16 @@
 #include "GraveLightShader.h"
 #include "GraveLight.h"
 #include "GraveBitmap.h"
+#include "SpriteFont.h"
+#include "SimpleMath.h"
+#include "SpriteBatch.h"
 
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
 const float SCREEN_DEPTH = 1000.0f;
 const float SCREEN_NEAR = 0.1f;
+
+using namespace std;
 
 class GraveGraphics
 {
@@ -27,6 +33,9 @@ private:
     bool Render(float rotation, float move);
 
 private:
+    float m_screenWidth;
+    float m_screenHeight;
+
     GraveD3D* m_Direct3D;
     Camera* m_Camera;
     Model* m_Model;
@@ -38,5 +47,9 @@ private:
 
     // 新增2D 物件
     GraveBitmap* m_Bitmap;
-};
 
+    // 新增
+    std::unique_ptr<DirectX::SpriteFont> m_font;
+    DirectX::SimpleMath::Vector2 m_fontPos;
+    std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
+};
