@@ -73,8 +73,10 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // 初始化 Light 物件，紫色燈光及方向朝向Z軸
+    // 試試看設定很亮的ambient color，並且把pixel shader 第45行的 color = saturate(color); 註解掉
+    m_Light->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
     m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_Light->SetDirection(0.0f, 0.0f, 1.0f);
+    m_Light->SetDirection(1.0f, 0.0f, 0.0f);
 
     return true;
 }
@@ -158,7 +160,7 @@ bool GraveGraphics::Render(float rotation)
 
     // 使用 shader 繪製模型
     result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-        m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetDiffuseColor());
+        m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor());
     if (!result)
     {
         return false;

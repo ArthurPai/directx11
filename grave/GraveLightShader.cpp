@@ -40,12 +40,12 @@ void GraveLightShader::Shutdown()
 
 bool GraveLightShader::Render(ID3D11DeviceContext* deviceContext, int indexCount,
     const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,
-    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 lightDiffuseColor)
+    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 lightAmbientColor, XMFLOAT4 lightDiffuseColor)
 {
     bool result;
 
     // Set the shader parameters that it will use for rendering.
-    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, lightDirection, lightDiffuseColor);
+    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, lightDirection, lightAmbientColor, lightDiffuseColor);
     if (!result)
     {
         return false;
@@ -308,7 +308,7 @@ void GraveLightShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND h
 
 bool GraveLightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix,
-    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 diffuseColor)
+    ID3D11ShaderResourceView* texture, XMFLOAT3 lightDirection, XMFLOAT4 ambientColor, XMFLOAT4 diffuseColor)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -356,6 +356,7 @@ bool GraveLightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     dataPtr2 = (LightBufferType*)mappedResource.pData;
 
     // 拷貝燈光參數到 constant buffer
+    dataPtr2->ambientColor = ambientColor;
     dataPtr2->diffuseColor = diffuseColor;
     dataPtr2->lightDirection = lightDirection;
     dataPtr2->padding = 0.0f;
