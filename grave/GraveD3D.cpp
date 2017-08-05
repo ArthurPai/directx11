@@ -7,6 +7,7 @@ GraveD3D::GraveD3D()
     m_deviceContext = NULL;
     m_renderTargetView = NULL;
     m_depthStencilBuffer = NULL;
+    m_depthDisabledStencilState = NULL;
     m_depthStencilState = NULL;
     m_depthStencilView = NULL;
     m_rasterState = NULL;
@@ -33,6 +34,7 @@ bool GraveD3D::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
     ID3D11Texture2D* backBufferPtr;
     D3D11_TEXTURE2D_DESC depthBufferDesc;
     D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+    D3D11_DEPTH_STENCIL_DESC depthDisabledStencilDesc;
     D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
     D3D11_RASTERIZER_DESC rasterDesc;
     D3D11_VIEWPORT viewport;
@@ -320,6 +322,32 @@ bool GraveD3D::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
     // 建立 orthographic projection matrix，用來繪製2D畫面，例如文字
     m_orthoMatrix = XMMatrixOrthographicLH((float)screenWidth, (float)screenHeight, screenNear, screenDepth);
 
+    // Clear the second depth stencil state before setting the parameters.
+    ZeroMemory(&depthDisabledStencilDesc, sizeof(depthDisabledStencilDesc));
+
+    // 建立第二個 depth stencil state 的description，給2D繪圖時不使用 Z buffer 功能。所有設定都跟前一個 depth stencil state 一樣，除了 DepthEnable 設為 false。
+    depthDisabledStencilDesc.DepthEnable = false;
+    depthDisabledStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+    depthDisabledStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+    depthDisabledStencilDesc.StencilEnable = true;
+    depthDisabledStencilDesc.StencilReadMask = 0xFF;
+    depthDisabledStencilDesc.StencilWriteMask = 0xFF;
+    depthDisabledStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    depthDisabledStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+    depthDisabledStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    depthDisabledStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+    depthDisabledStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+    depthDisabledStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+    depthDisabledStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+    depthDisabledStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+    // 建立 depth stencil state
+    result = m_device->CreateDepthStencilState(&depthDisabledStencilDesc, &m_depthDisabledStencilState);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -341,6 +369,12 @@ void GraveD3D::Shutdown()
     {
         m_depthStencilView->Release();
         m_depthStencilView = 0;
+    }
+
+    if (m_depthDisabledStencilState)
+    {
+        m_depthDisabledStencilState->Release();
+        m_depthDisabledStencilState = 0;
     }
 
     if (m_depthStencilState)
@@ -449,5 +483,17 @@ void GraveD3D::GetVideoCardInfo(char* cardName, int& memory)
 {
     strcpy_s(cardName, 128, m_videoCardDescription);
     memory = m_videoCardMemory;
+    return;
+}
+
+void GraveD3D::TurnZBufferOn()
+{
+    m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
+    return;
+}
+
+void GraveD3D::TurnZBufferOff()
+{
+    m_deviceContext->OMSetDepthStencilState(m_depthDisabledStencilState, 1);
     return;
 }

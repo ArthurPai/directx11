@@ -2,8 +2,10 @@
 #include "GraveD3D.h"
 #include "Camera.h"
 #include "Model.h"
+#include "GraveTextureShader.h"
 #include "GraveLightShader.h"
 #include "GraveLight.h"
+#include "GraveBitmap.h"
 
 const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
@@ -22,7 +24,7 @@ public:
 
 private:
     // 增加旋轉的參數
-    bool Render(float rotation);
+    bool Render(float rotation, float move);
 
 private:
     GraveD3D* m_Direct3D;
@@ -31,6 +33,10 @@ private:
 
     // 新增燈光及燈光的Shader
     GraveLight* m_Light;
+    GraveTextureShader* m_TextureShader;
     GraveLightShader* m_LightShader;
+
+    // 新增2D 物件
+    GraveBitmap* m_Bitmap;
 };
 

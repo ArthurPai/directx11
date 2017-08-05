@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ColorShader.cpp" />
+    <ClCompile Include="GraveBitmap.cpp" />
     <ClCompile Include="GraveD3D.cpp" />
     <ClCompile Include="GraveGraphics.cpp" />
     <ClCompile Include="GraveInput.cpp" />
@@ -161,6 +162,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ColorShader.h" />
+    <ClInclude Include="GraveBitmap.h" />
     <ClInclude Include="GraveD3D.h" />
     <ClInclude Include="GraveGraphics.h" />
     <ClInclude Include="GraveInput.h" />

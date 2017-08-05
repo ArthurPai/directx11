@@ -5,8 +5,10 @@ GraveGraphics::GraveGraphics()
     m_Direct3D = NULL;
     m_Camera = NULL;
     m_Model = NULL;
+    m_TextureShader = NULL;
     m_LightShader = NULL;
     m_Light = NULL;
+    m_Bitmap = NULL;
 }
 
 GraveGraphics::~GraveGraphics()
@@ -52,16 +54,29 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         return false;
     }
     
-    // 建立 shader 物件
+    // 建立 texture shader 物件
+    m_TextureShader = new GraveTextureShader;
+    if (!m_TextureShader) {
+        return false;
+    }
+
+    // 初始化 texture shader 物件
+    result = m_TextureShader->Initialize(m_Direct3D->GetDevice(), hwnd);
+    if (!result) {
+        MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // 建立 light shader 物件
     m_LightShader = new GraveLightShader;
     if (!m_LightShader) {
         return false;
     }
 
-    // 初始化 shader 物件
+    // 初始化 light shader 物件
     result = m_LightShader->Initialize(m_Direct3D->GetDevice(), hwnd);
     if (!result) {
-        MessageBox(hwnd, L"Could not initialize the shader object.", L"Error", MB_OK);
+        MessageBox(hwnd, L"Could not initialize the light shader object.", L"Error", MB_OK);
         return false;
     }
 
@@ -80,11 +95,33 @@ bool GraveGraphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
     m_Light->SetSpecularPower(32.0f);
 
+    // 建立 2D bitmap 物件
+    m_Bitmap = new GraveBitmap;
+    if (!m_Bitmap)
+    {
+        return false;
+    }
+
+    // 初始化 2D bitmap 物件
+    result = m_Bitmap->Initialize(m_Direct3D->GetDevice(), m_Direct3D->GetDeviceContext(), screenWidth, screenHeight, "./Data/seafloor.tga", 256, 128);
+    if (!result)
+    {
+        MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
+        return false;
+    }
+
     return true;
 }
 
 void GraveGraphics::Shutdown()
 {
+    if (m_Bitmap)
+    {
+        m_Bitmap->Shutdown();
+        delete m_Bitmap;
+        m_Bitmap = 0;
+    }
+
     if (m_Light) {
         delete m_Light;
         m_Light = 0;
@@ -94,6 +131,12 @@ void GraveGraphics::Shutdown()
         m_LightShader->Shutdown();
         delete m_LightShader;
         m_LightShader = 0;
+    }
+
+    if (m_TextureShader) {
+        m_TextureShader->Shutdown();
+        delete m_TextureShader;
+        m_TextureShader = 0;
     }
 
     if (m_Model) {
@@ -120,6 +163,7 @@ bool GraveGraphics::Frame()
     bool result;
 
     static float rotation = 0.0f;
+    static float moveX = 0.0f;
 
     // 每個Frame更新旋轉量
     rotation += (float)XM_PI * 0.001f;
@@ -127,8 +171,14 @@ bool GraveGraphics::Frame()
         rotation -= 360.0f;
     }
 
+    // 每個Frame更新 2D 物件的位置
+    moveX += 1.0f;
+    if (moveX > 544.0f) { // 800 - 256
+        moveX = 0.0f;
+    }
+
     // 繪製場景
-    result = Render(rotation);
+    result = Render(rotation, moveX);
     if (!result) {
         return false;
     }
@@ -136,9 +186,9 @@ bool GraveGraphics::Frame()
     return true;
 }
 
-bool GraveGraphics::Render(float rotation)
+bool GraveGraphics::Render(float rotation, float move)
 {
-    XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
+    XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
     bool result;
 
     // 清除背景
@@ -152,22 +202,46 @@ bool GraveGraphics::Render(float rotation)
     m_Camera->GetViewMatrix(viewMatrix);
     m_Direct3D->GetProjectionMatrix(projectionMatrix);
 
+    // 抓取 orthogonal matrix
+    m_Direct3D->GetOrthoMatrix(orthoMatrix);
+
     // 根據傳進來的旋轉量來更新 world 矩陣
     XMVECTOR axisY = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMMATRIX rotateMatrix = XMMatrixRotationNormal(axisY, rotation);
-    worldMatrix = XMMatrixMultiply(worldMatrix, rotateMatrix);
+    XMMATRIX midelWorldMatrix = XMMatrixMultiply(worldMatrix, rotateMatrix);
 
     // 繪製模型：將模型的 vertex 及 index buffers 放入 render pipeline
     m_Model->Render(m_Direct3D->GetDeviceContext());
 
     // 使用 shader 繪製模型
-    result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+    result = m_LightShader->Render(m_Direct3D->GetDeviceContext(), m_Model->GetIndexCount(), midelWorldMatrix, viewMatrix, projectionMatrix,
         m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
         m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
     if (!result)
     {
         return false;
     }
+
+    // 關掉 Z Buffer
+    m_Direct3D->TurnZBufferOff();
+
+    // Put the bitmap vertex and index buffers on the graphics pipeline to prepare them for drawing.
+    result = m_Bitmap->Render(m_Direct3D->GetDeviceContext(), move, 10);
+    if (!result)
+    {
+        return false;
+    }
+
+    // Render the bitmap with the texture shader.
+    result = m_TextureShader->Render(m_Direct3D->GetDeviceContext(), m_Bitmap->GetIndexCount(), worldMatrix, viewMatrix, orthoMatrix,
+        m_Bitmap->GetTexture());
+    if (!result)
+    {
+        return false;
+    }
+
+    // 開啟 Z buffer
+    m_Direct3D->TurnZBufferOn();
 
     // 顯示結果到螢幕上
     m_Direct3D->EndScene();
