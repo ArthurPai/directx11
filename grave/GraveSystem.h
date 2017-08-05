@@ -5,6 +5,9 @@
 #include <windows.h>
 #include "GraveInput.h"
 #include "GraveGraphics.h"
+#include "GraveFPS.h"
+#include "GraveCpuProfile.h"
+#include "GraveTimer.h"
 
 class GraveSystem
 {
@@ -30,6 +33,10 @@ private:
 
     GraveInput* m_Input;
     GraveGraphics* m_Graphics;
+
+    GraveFPS* m_Fps;
+    GraveCpuProfile* m_Cpu;
+    GraveTimer* m_Timer;
 };
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam);

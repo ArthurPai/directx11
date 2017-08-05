@@ -149,7 +149,9 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ColorShader.cpp" />
     <ClCompile Include="GraveBitmap.cpp" />
+    <ClCompile Include="GraveCpuProfile.cpp" />
     <ClCompile Include="GraveD3D.cpp" />
+    <ClCompile Include="GraveFPS.cpp" />
     <ClCompile Include="GraveGraphics.cpp" />
     <ClCompile Include="GraveInput.cpp" />
     <ClCompile Include="GraveLight.cpp" />
@@ -157,6 +159,7 @@
     <ClCompile Include="GraveSystem.cpp" />
     <ClCompile Include="GraveTexture.cpp" />
     <ClCompile Include="GraveTextureShader.cpp" />
+    <ClCompile Include="GraveTimer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
   </ItemGroup>
@@ -164,7 +167,9 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ColorShader.h" />
     <ClInclude Include="GraveBitmap.h" />
+    <ClInclude Include="GraveCpuProfile.h" />
     <ClInclude Include="GraveD3D.h" />
+    <ClInclude Include="GraveFPS.h" />
     <ClInclude Include="GraveGraphics.h" />
     <ClInclude Include="GraveInput.h" />
     <ClInclude Include="GraveLight.h" />
@@ -172,6 +177,7 @@
     <ClInclude Include="GraveSystem.h" />
     <ClInclude Include="GraveTexture.h" />
     <ClInclude Include="GraveTextureShader.h" />
+    <ClInclude Include="GraveTimer.h" />
     <ClInclude Include="Model.h" />
   </ItemGroup>
   <ItemGroup>

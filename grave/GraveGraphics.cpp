@@ -168,7 +168,7 @@ void GraveGraphics::Shutdown()
     }
 }
 
-bool GraveGraphics::Frame()
+bool GraveGraphics::Frame(int fps, int cpuPercentage, float frameTime)
 {
     bool result;
 
@@ -188,7 +188,7 @@ bool GraveGraphics::Frame()
     }
 
     // 繪製場景
-    result = Render(rotation, moveX);
+    result = Render(rotation, moveX, fps, cpuPercentage, frameTime);
     if (!result) {
         return false;
     }
@@ -196,7 +196,7 @@ bool GraveGraphics::Frame()
     return true;
 }
 
-bool GraveGraphics::Render(float rotation, float move)
+bool GraveGraphics::Render(float rotation, float move, int fps, int cpuPercentage, float frameTime)
 {
     XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
     bool result;
@@ -256,7 +256,9 @@ bool GraveGraphics::Render(float rotation, float move)
     // 開始輸出文字
     m_spriteBatch->Begin();
 
-    const wchar_t* output = L"Hello World";
+    // Setup the output string.
+    wchar_t output[32];
+    swprintf(output, L"FPS: %d, Cpu: %d, Time: %0.2f", fps, cpuPercentage, frameTime);
 
     // 文字的座標，中心點
     //m_fontPos.x = m_screenWidth / 2.f;

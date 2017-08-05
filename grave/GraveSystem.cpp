@@ -4,6 +4,9 @@ GraveSystem::GraveSystem()
 {
     m_Input = NULL;
     m_Graphics = NULL;
+    m_Fps = NULL;
+    m_Cpu = NULL;
+    m_Timer = NULL;
 }
 
 GraveSystem::~GraveSystem()
@@ -39,11 +42,63 @@ bool GraveSystem::Initialize()
         return false;
     }
 
+    // Create the fps object.
+    m_Fps = new GraveFPS;
+    if (!m_Fps)
+    {
+        return false;
+    }
+
+    // Initialize the fps object.
+    m_Fps->Initialize();
+    
+    // Create the cpu object.
+    m_Cpu = new GraveCpuProfile;
+    if (!m_Cpu)
+    {
+        return false;
+    }
+
+    // Initialize the cpu object.
+    m_Cpu->Initialize();
+
+    // Create the timer object.
+    m_Timer = new GraveTimer;
+    if (!m_Timer)
+    {
+        return false;
+    }
+
+    // Initialize the timer object.
+    result = m_Timer->Initialize();
+    if (!result)
+    {
+        MessageBox(m_hwnd, L"Could not initialize the Timer object.", L"Error", MB_OK);
+        return false;
+    }
+
     return true;
 }
 
 void GraveSystem::Shutdown()
 {
+    if (m_Timer)
+    {
+        delete m_Timer;
+        m_Timer = 0;
+    }
+
+    if (m_Cpu) {
+        m_Cpu->Shutdown();
+        delete m_Cpu;
+        m_Cpu = 0;
+    }
+
+    if (m_Fps) {
+        delete m_Fps;
+        m_Fps = 0;
+    }
+
     // 釋放 graphics 物件
     if (m_Graphics) {
         m_Graphics->Shutdown();
@@ -96,13 +151,18 @@ bool GraveSystem::Frame()
 {
     bool result;
 
+    // Update the system stats.
+	m_Timer->Frame();
+    m_Fps->Frame();
+    m_Cpu->Frame();
+
     // 檢查使用者是否按下ESC的按鍵
     if (m_Input->IsKeyDown(VK_ESCAPE)) {
         return false;
     }
 
     // 執行繪圖工作
-    result = m_Graphics->Frame();
+    result = m_Graphics->Frame(m_Fps->GetFps(), m_Cpu->GetCpuPercentage(), m_Timer->GetTime());
     if (!result) {
         return false;
     }
