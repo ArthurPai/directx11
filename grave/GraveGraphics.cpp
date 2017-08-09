@@ -168,7 +168,7 @@ void GraveGraphics::Shutdown()
     }
 }
 
-bool GraveGraphics::Frame(int fps, int cpuPercentage, float frameTime)
+bool GraveGraphics::Frame(int mouseX, int mouseY, int fps, int cpuPercentage, float frameTime)
 {
     bool result;
 
@@ -188,7 +188,7 @@ bool GraveGraphics::Frame(int fps, int cpuPercentage, float frameTime)
     }
 
     // 繪製場景
-    result = Render(rotation, moveX, fps, cpuPercentage, frameTime);
+    result = Render(mouseX, mouseY, rotation, moveX, fps, cpuPercentage, frameTime);
     if (!result) {
         return false;
     }
@@ -196,7 +196,7 @@ bool GraveGraphics::Frame(int fps, int cpuPercentage, float frameTime)
     return true;
 }
 
-bool GraveGraphics::Render(float rotation, float move, int fps, int cpuPercentage, float frameTime)
+bool GraveGraphics::Render(int mouseX, int mouseY, float rotation, float move, int fps, int cpuPercentage, float frameTime)
 {
     XMMATRIX worldMatrix, viewMatrix, projectionMatrix, orthoMatrix;
     bool result;
@@ -257,8 +257,8 @@ bool GraveGraphics::Render(float rotation, float move, int fps, int cpuPercentag
     m_spriteBatch->Begin();
 
     // Setup the output string.
-    wchar_t output[32];
-    swprintf(output, L"FPS: %d, Cpu: %d, Time: %0.2f", fps, cpuPercentage, frameTime);
+    wchar_t output[64];
+    swprintf(output, L"Mouse(%d, %d)\nFPS: %d, Cpu: %d, Time: %0.2f", mouseX, mouseY, fps, cpuPercentage, frameTime);
 
     // 文字的座標，中心點
     //m_fontPos.x = m_screenWidth / 2.f;

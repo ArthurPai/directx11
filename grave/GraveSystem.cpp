@@ -28,7 +28,12 @@ bool GraveSystem::Initialize()
     }
 
     // 初始化 input 物件 
-    m_Input->Initialize();
+    result = m_Input->Initialize(m_hInstance, m_hwnd, screenWidth, screenHeight);
+    if (!result)
+    {
+        MessageBox(m_hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
+        return false;
+    }
 
     // 建立 graphics 物件, 這個物件會負責繪圖的功能
     m_Graphics = new GraveGraphics;
@@ -107,9 +112,11 @@ void GraveSystem::Shutdown()
     }
 
     // 釋放 input 物件
-    if (m_Input) {
+    if (m_Input)
+    {
+        m_Input->Shutdown();
         delete m_Input;
-        m_Input = NULL;
+        m_Input = 0;
     }
 
     // 關閉視窗
@@ -144,25 +151,41 @@ void GraveSystem::Run()
                 done = true;
             }
         }
+
+        // Check if the user pressed escape and wants to quit.
+        if (m_Input->IsEscapePressed() == true)
+        {
+            done = true;
+        }
     }
 }
 
 bool GraveSystem::Frame()
 {
     bool result;
+    int mouseX, mouseY;
+
+    // 呼叫 Direct Input 處理流程
+    result = m_Input->Frame();
+    if (!result)
+    {
+        return false;
+    }
+
+    // 取得滑鼠位置
+    m_Input->GetMouseLocation(mouseX, mouseY);
 
     // Update the system stats.
 	m_Timer->Frame();
     m_Fps->Frame();
     m_Cpu->Frame();
 
-    // 檢查使用者是否按下ESC的按鍵
-    if (m_Input->IsKeyDown(VK_ESCAPE)) {
-        return false;
-    }
+    //POINT point;
+    //GetCursorPos(&point);
+    //ScreenToClient(m_hwnd, &point);
 
     // 執行繪圖工作
-    result = m_Graphics->Frame(m_Fps->GetFps(), m_Cpu->GetCpuPercentage(), m_Timer->GetTime());
+    result = m_Graphics->Frame(mouseX, mouseY, m_Fps->GetFps(), m_Cpu->GetCpuPercentage(), m_Timer->GetTime());
     if (!result) {
         return false;
     }
@@ -172,22 +195,7 @@ bool GraveSystem::Frame()
 
 LRESULT CALLBACK GraveSystem::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-    switch (umsg)
-    {
-    // 檢查是否有按下按鍵
-    case WM_KEYDOWN:
-        // 將按鍵按下的訊息傳送給 input 物件來紀錄按鍵狀態
-        m_Input->KeyDown((unsigned int)wparam);
-        return 0;
-    // 檢查是否有釋放按鍵
-    case WM_KEYUP:
-        // 將按鍵釋放的訊息傳送給 input 物件來紀錄按鍵狀態
-        m_Input->KeyUp((unsigned int)wparam);
-        return 0;
-    // 其他不處理的訊息，交還給系統處理
-    default:
-        return DefWindowProc(hwnd, umsg, wparam, lparam);
-    }
+    return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
 void GraveSystem::InitializeWindows(int &screenWidth, int &screenHeight)
