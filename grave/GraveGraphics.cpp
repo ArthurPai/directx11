@@ -168,6 +168,20 @@ void GraveGraphics::Shutdown()
     }
 }
 
+void GraveGraphics::MoveCamera(int x, int y, int z)
+{
+	XMFLOAT3 pos = m_Camera->GetPosition();
+
+	if (z > 0) {
+		pos.z += 0.01f;
+	}
+	else if (z < 0) {
+		pos.z -= 0.01f;
+	}
+
+	m_Camera->SetPosition(pos.x, pos.y, pos.z);
+}
+
 bool GraveGraphics::Frame(int mouseX, int mouseY, int fps, int cpuPercentage, float frameTime)
 {
     bool result;
@@ -187,7 +201,7 @@ bool GraveGraphics::Frame(int mouseX, int mouseY, int fps, int cpuPercentage, fl
         moveX = 0.0f;
     }
 
-    // 繪製場景
+   // 繪製場景
     result = Render(mouseX, mouseY, rotation, moveX, fps, cpuPercentage, frameTime);
     if (!result) {
         return false;

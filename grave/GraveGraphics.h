@@ -28,6 +28,7 @@ public:
     void Shutdown();
     bool Frame(int mouseX, int mouseY, int fps, int cpuPercentage, float frameTime);
 
+	void MoveCamera(int x, int y, int z);
 private:
     // 增加旋轉的參數
     bool Render(int mouseX, int mouseY, float rotation, float move, int fps, int cpuPercentage, float frameTime);

@@ -184,6 +184,13 @@ bool GraveSystem::Frame()
     //GetCursorPos(&point);
     //ScreenToClient(m_hwnd, &point);
 
+	if (m_Input->IsUpPressed()) {
+		m_Graphics->MoveCamera(0, 0, 1);
+	}
+	else if (m_Input->IsDownPressed()) {
+		m_Graphics->MoveCamera(0, 0, -1);
+	}
+
     // 執行繪圖工作
     result = m_Graphics->Frame(mouseX, mouseY, m_Fps->GetFps(), m_Cpu->GetCpuPercentage(), m_Timer->GetTime());
     if (!result) {

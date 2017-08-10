@@ -210,6 +210,28 @@ bool GraveInput::IsEscapePressed()
     return false;
 }
 
+bool GraveInput::IsUpPressed()
+{
+	// Do a bitwise and on the keyboard state to check if the escape key is currently being pressed.
+	if (m_keyboardState[DIK_UP] & 0x80)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool GraveInput::IsDownPressed()
+{
+	// Do a bitwise and on the keyboard state to check if the escape key is currently being pressed.
+	if (m_keyboardState[DIK_DOWN] & 0x80)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void GraveInput::GetMouseLocation(int& mouseX, int& mouseY)
 {
     mouseX = m_mouseX;
